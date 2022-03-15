@@ -1,0 +1,4 @@
+INDEX VERSION 1.131+C:\Users\simon\OneDrive - Universite De Technologie De Belfort-Montbeliard\Quatrieme_annee\INFO 4\Positionning\TP\Positionning\.metadata\.plugins\org.eclipse.jdt.core
+1865797976.index
+2633757737.index
+75931715.index

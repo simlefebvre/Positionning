@@ -12,6 +12,7 @@ public class Receiver {
 		double temp = 0.7;
 		int nbiter = 99999;
 		double pas = 0.95;
+		
 		double bestdist = 999999;
 		
 		Coordinate bestcoo =  new Coordinate(Math.random() * 10 - 5, Math.random()* 10 - 5, Math.random()* 10 - 5);

@@ -1,0 +1,12 @@
+package fr.utbm.positionning.tp1.MainClass;
+
+public class Receiver {
+	
+	public Receiver() {
+		
+	}
+	
+	public double compute(Emmetor...emmetors) {
+		return 0;
+	}
+}

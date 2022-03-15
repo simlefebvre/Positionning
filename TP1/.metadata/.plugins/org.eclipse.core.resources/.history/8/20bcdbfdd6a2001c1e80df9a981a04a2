@@ -1,0 +1,23 @@
+package fr.utbm.positionning.tp1.MainClass;
+
+import java.util.Random;
+
+public class Receiver {
+	
+	public Receiver() {
+		
+	}
+	
+	public double compute(Emmetor...emmetors) {
+		
+		Coordinate cootemp = new Coordinate(Math.random(), Math.random(), Math.random());
+		
+		double distance = 0;
+		
+		for(Emmetor emmetor : emmetors) {
+			distance = distance +emmetor.getCoo().distance()
+		}
+		
+		return 0;
+	}
+}

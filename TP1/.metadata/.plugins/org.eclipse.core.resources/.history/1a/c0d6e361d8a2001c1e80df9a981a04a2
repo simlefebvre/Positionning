@@ -1,0 +1,38 @@
+package fr.utbm.positionning.tp1.MainClass;
+
+import java.util.Random;
+
+public class Receiver {
+	
+	public Receiver() {
+		
+	}
+	
+	public double compute(Emmetor...emmetors) {
+		double temp = 10;
+		double bestdist = 999999;
+		Coordinate bestcoo =  new Coordinate(Math.random() * 10 - 5, Math.random()* 10 - 5, Math.random()* 10 - 5);
+		
+		Coordinate cootemp = new Coordinate(bestcoo.getX() + (Math.random() * 2 - 1), bestcoo.getX() + (Math.random() * 2 - 1),bestcoo.getX() + (Math.random() * 2 - 1));
+		
+		double distance = 0;
+		
+		for(Emmetor emmetor : emmetors) {
+			distance = distance +(emmetor.getCoo().distance(cootemp) - emmetor.getDist());
+		}
+		
+		double delta = bestdist - distance;
+		
+		
+		if(delta>0) {
+			bestdist = distance;
+			bestcoo = cootemp;
+		}else {
+			if(Math.random() < Math.exp(-delta/temp)) {
+				
+			}
+		}
+		
+		return 0;
+	}
+}
