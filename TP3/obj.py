@@ -1,4 +1,5 @@
 import math
+from numpy import arange
 
 class RSSISample:
     
@@ -19,6 +20,7 @@ class RSSISample:
         for sample in self.rssis:
             sum = sum+ sample
         self.rssi = 10 ** ((sum/len(self.rssis)) / 10.)
+        return self
     
     def __repr__(self) -> str:
         """
@@ -65,6 +67,16 @@ class FingerprintSample:
         if isinstance(object, FingerprintSample):
             return self.samples == object.samples
         return False
+
+    def toDict(self):
+        """
+        Returns a dictionary representation of the FingerprintSample object.
+        @return: A dictionary representation of the FingerprintSample object.
+        """
+        dic = {}
+        for sample in self.samples:
+            dic[sample.mac_address] = sample.rssis
+        return dic
 
 
 
@@ -150,7 +162,7 @@ class exportateur():
                 data.write("\n")
 
 class AccessPoint:
-    def __init__(self, mac: str, loc: SimpleLocation=SimpleLocation(), p: float=20.0, a: float=5.0, f: float=2417000000):
+    def __init__(self, mac: str, loc: SimpleLocation=SimpleLocation(0,0,0), p: float=20.0, a: float=5.0, f: float=2417000000):
         self.mac_address = mac
         self.location = loc
         self.output_power_dbm = p
@@ -175,11 +187,11 @@ def compute_FBCM_index(distance: float, rssi_values: RSSISample, ap: AccessPoint
     return (Pt + Gr + Gt - Pr + 20*math.log10(lambd) - 20 * math.log10(4*math.pi)) / (10*math.log10(d))
 
 
-AP = {"00:13:ce:95:e1:6f": AccessPoint("00:13:ce:95:e1:6f", 4.93, 25.81, 3.55, 20.0, 5.0, 2417000000), \
-      "00:13:ce:95:de:7e": AccessPoint("00:13:ce:95:de:7e", 4.83, 10.88, 3.78, 20.0, 5.0,2417000000), \
-      "00:13:ce:97:78:79": AccessPoint("00:13:ce:97:78:79", 20.05, 28.31, 3.74, 20.0, 5.0, 2417000000), \
-      "00:13:ce:8f:77:43": AccessPoint("00:13:ce:8f:77:43", 4.13, 7.085, 0.80, 20.0, 5.0,2417000000), \
-      "00:13:ce:8f:78:d9": AccessPoint("00:13:ce:8f:78:d9", 5.74, 30.35, 2.04, 20.0, 5.0,2417000000)}
+AP = {"00:13:ce:95:e1:6f": AccessPoint("00:13:ce:95:e1:6f", SimpleLocation(4.93, 25.81, 3.55), 20.0, 5.0, 2417000000), \
+      "00:13:ce:95:de:7e": AccessPoint("00:13:ce:95:de:7e", SimpleLocation(4.83, 10.88, 3.78), 20.0, 5.0,2417000000), \
+      "00:13:ce:97:78:79": AccessPoint("00:13:ce:97:78:79", SimpleLocation(20.05, 28.31, 3.74), 20.0, 5.0, 2417000000), \
+      "00:13:ce:8f:77:43": AccessPoint("00:13:ce:8f:77:43", SimpleLocation(4.13, 7.085, 0.80), 20.0, 5.0,2417000000), \
+      "00:13:ce:8f:78:d9": AccessPoint("00:13:ce:8f:78:d9", SimpleLocation(5.74, 30.35, 2.04), 20.0, 5.0,2417000000)}
 
 def estimate_distance(rssi_avg: float, fbcm_index: float, ap: AccessPoint) -> float:
     """
@@ -200,6 +212,8 @@ def estimate_distance(rssi_avg: float, fbcm_index: float, ap: AccessPoint) -> fl
 
     return math.pow(10, ((Pt + Gr + Gt - Pr + 20*math.log10(lambd) - 20 * math.log10(4*math.pi)) / (10*i)))
 
+dist = lambda x ,y  : math.sqrt((x.x-y.x)**2 + (x.y-y.y)**2 + (x.z-y.z)**2)
+
 def computeCost(distances: dict[str, float], ap_locations: dict[str, SimpleLocation],loc : SimpleLocation) -> float:
     """
     Function computeCost computes the cost of a location based on its distances towards at least 3 access points
@@ -207,7 +221,6 @@ def computeCost(distances: dict[str, float], ap_locations: dict[str, SimpleLocat
     :param ap_locations: the access points locations, indexed by AP MAC address as strings
     :return: a cost
     """
-    dist = lambda x ,y  : math.sqrt((x.x-y.x)**2 + (x.y-y.y)**2 + (x.z-y.z)**2)
     cout = 0
     for d in distances.keys():
         cout = cout + abs(dist(ap_locations[d],loc) - distances[d])
@@ -235,13 +248,48 @@ def multilateration(distances: dict[str, float], ap_locations: dict[str, SimpleL
     :return: a location
     """
     bestloc = SimpleLocation(0,0,0)
-    bestCost = computeCost(distances,ap_locations,loc)
+    bestCost = computeCost(distances,ap_locations,bestloc)
     x_min,x_max,y_min,y_max,z_min,z_max = computeSpaceResearch(ap_locations)
-    for x in range(x_min,x_max,0.01):
-        for y in range(y_min,y_max,0.01):
-            for z in range(z_min,z_max,0.01):
+    for x in arange(x_min,x_max,0.1):
+        for y in arange(y_min,y_max,0.1):
+            for z in arange(z_min,z_max,0.1):
                 loc = SimpleLocation(x,y,z)
                 if computeCost(distances,ap_locations,loc) < bestCost:
                     bestCost = computeCost(distances,ap_locations,loc)
                     bestloc = loc
     return bestloc
+
+def estimate_AP_index(db : FingerprintDatabase, ap_mac : str) -> float:
+    """
+    Function estimate_AP_index estimates the FBCM index for a given access point
+    :param db: the fingerprint database
+    :param ap_mac: the access point MAC address
+    :return: the FBCM index
+    """
+    compt = 0
+    sum = 0
+    for fp in db.db:
+        for sample in fp.sample.samples:
+            if sample.mac_address == ap_mac:
+                sum = sum + compute_FBCM_index(dist(fp.position,AP[ap_mac].location),sample,AP[ap_mac])
+                compt = compt +1
+    return sum/compt
+
+def rssi_distance(sample1: dict[str, float], sample2: dict[str, float]) -> float:
+    sum = 0
+    for mac in sample1.keys():
+        if mac not in sample2.keys():
+            return -1
+        else:
+            sum = sum + (sample1[mac] - sample2[mac])**2
+    return math.sqrt(sum) 
+
+def simple_matching(db: FingerprintDatabase, sample: dict[str, float]) -> SimpleLocation:
+    bestFP = db.db.pop()
+    bestDistance = rssi_distance(sample,bestFP.sample.toDict())
+
+    for fp in db.db:
+        if rssi_distance(sample,fp.sample.toDict()) < bestDistance:
+            bestDistance = rssi_distance(sample,fp.sample.toDict())
+            bestFP = fp
+    return bestFP.position
