@@ -1,4 +1,6 @@
-from obj import *
+from TP1 import *
+from TP2 import *
+from TP3 import *
 
 fpdb = FingerprintDatabase()
 
@@ -16,22 +18,27 @@ def TP2():
         index = estimate_AP_index(fpdb,mac)
         APIndex[mac] = index
 
+    MobileSamples = []
+    
+    testT = []
     #Calcul a partir des index, la distance entre le mobile et les différents AP
     #Lecture du fichier de données
     with open("test_data.csv") as test:
-        MobileSamples = []
+        
         for line in test:
+            testT.append(line[:line.find(",0,")])
             line = line[line.find(",0,")+3:]
             data = line.split(",")
             RSSISamples = []
             for i in range(0,len(data),2):
                 mac = data[i]
                 rssi = float(data[i+1])
-                RssiSample = RSSISample(mac,[rssi]).setAverageRssi()
+                RssiSample = RSSISample(mac,[rssi])
+                RssiSample.setAverageRssi()
                 RSSISamples.append(RssiSample)
             MobileSamples.append(FingerprintSample(RSSISamples))
                 
-    for MobileSample in MobileSamples:
+    for MobileSample,st in zip(MobileSamples,testT):
         APDist = {}
         for mac in AP.keys():
             for sample in MobileSample.samples:
@@ -45,7 +52,7 @@ def TP2():
             APLoc[mac] = AP[mac].location
 
         mobileLoc = multilateration(APDist,APLoc)
-
+        print(st)
         print(mobileLoc)
 
 if __name__ == "__main__":
