@@ -1,3 +1,4 @@
+from this import d
 from TP1 import *
 from TP2 import *
 from TP3 import *
@@ -55,6 +56,21 @@ def TP2():
         print(st)
         print(mobileLoc)
 
+def TP3_histo():
+    fdb = FingerprintDatabase()
+    a = Parser("test_data_not_filtered.csv",fdb)
+    #fpdbhisto = fromDbToHisto(fpdb)
+
+    for fp in fdb.db:
+        print(fp.position)
+        histo = fromFingerPrintToHisto(fp)
+        mobileLoc = histogram_matching(fpdb,histo)
+        print(mobileLoc,"\n")
+
 if __name__ == "__main__":
     TP1()
-    TP2()
+    #TP2()
+    #TP3_histo()
+
+    
+    pass

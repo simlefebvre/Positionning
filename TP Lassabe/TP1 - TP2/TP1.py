@@ -36,6 +36,7 @@ class RSSISample:
         return self.mac_address == __o.mac_address and self.rssis == __o.rssis and self.rssi == __o.rssi
 
 class FingerprintSample:
+    
     def __init__(self, samples: list[RSSISample] ) -> None:
         self.samples = samples
 
