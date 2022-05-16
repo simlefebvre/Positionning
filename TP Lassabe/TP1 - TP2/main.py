@@ -61,16 +61,33 @@ def TP3_histo():
     a = Parser("test_data_not_filtered.csv",fdb)
     #fpdbhisto = fromDbToHisto(fpdb)
 
+    i=0
     for fp in fdb.db:
-        print(fp.position)
+        print(i)
+        i = i+1
+        print("position exact",fp.position)
         histo = fromFingerPrintToHisto(fp)
         mobileLoc = histogram_matching(fpdb,histo)
-        print(mobileLoc,"\n")
+        print("position estimé",mobileLoc,"\n")
+
+def TP3_gauss():
+    fdb = FingerprintDatabase()
+    a = Parser("test_data_not_filtered.csv",fdb)
+    #fpdbhisto = fromDbToHisto(fpdb)
+
+    i=0
+    for fp in fdb.db:
+        print(i)
+        i = i+1
+        print("position exact",fp.position)
+        gauss = fromFingerprintToGauss(fp)
+        mobileLoc = gauss_matching(fpdb,gauss)
+        print("position estimé",mobileLoc,"\n")
 
 if __name__ == "__main__":
     TP1()
     #TP2()
     #TP3_histo()
-
+    TP3_gauss()
     
     pass

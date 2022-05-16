@@ -1,4 +1,6 @@
 import math
+
+import numpy
 from TP1 import *
 from TP2 import *
 
@@ -24,24 +26,6 @@ def simple_matching(db: FingerprintDatabase, sample: dict[str, float]) -> Simple
 class NormHisto:
     def __init__(self, histo: dict[int, float]):
         self.histogram = histo
-
-"""
-def convertRssiToHisto(sample: dict[str, float]) -> dict[int, float]:
-    
-    Convertit un fingerprint en histogramme
-
-
-    histo = {}
-    sum = 0
-    for mac,rssi in sample.items():
-        sum = sum + rssi
-    
-    if sum == 0:
-        raise ValueError("Fingerprint vide")
-    for mac in sample.keys():
-        histo[mac] = sample[mac]/sum
-    return histo
-"""
 
 def ParserHisto(fichier : str) -> list[tuple[SimpleLocation,dict[int, float]]]:
     L = []
@@ -104,7 +88,6 @@ def probability(histo1: NormHisto, histo2: NormHisto) -> float :
             sum = sum + min(histo1.histogram[dbm],histo2.histogram[dbm])
     return sum
 
-
 def histogram_matching(db: FingerprintDatabase, sample: dict[str,NormHisto]) -> SimpleLocation:
     histDb = fromDbToHisto(db)
     bestScore = None
@@ -119,6 +102,52 @@ def histogram_matching(db: FingerprintDatabase, sample: dict[str,NormHisto]) -> 
             bestScore = score
             bestLoc = loc
     return bestLoc        
+
+class GaussModel:
+    def __init__(self, avg: float, stddev: float):
+        self.average_rssi = avg
+        self.standard_deviation = stddev
+
+normal = lambda x,sample : (1/(math.sqrt(2*math.pi)*sample.standard_deviation))*math.exp(- (1/2) * ((x - sample.average_rssi)/sample.standard_deviation)**2)
+
+def histogram_from_gauss(sample: GaussModel) -> NormHisto:
+    L = [i for i in range(math.floor(sample.average_rssi)-10,math.floor(sample.average_rssi)+10)]
+    histo = {}
+    for dbm in L:
+        histo[dbm] = normal(dbm,sample)
+    return NormHisto(histo)
+
+def fromFingerprintToGauss(sample: Fingerprint) -> dict[str,GaussModel]:
+    D = {}
+    for samp in sample.sample.samples:
+       D[samp.mac_address] = GaussModel(numpy.mean(samp.rssis),numpy.std(samp.rssis))
+    return D
+
+def fromDbToGauss(db: FingerprintDatabase) -> list[tuple[SimpleLocation,dict[str,GaussModel]]]:
+    L = []
+    for fp in db.db:
+        L.append((fp.position,fromFingerprintToGauss(fp)))
+    return L
+
+def probability_gauss(gauss1: GaussModel, gauss2: GaussModel) -> float :
+    hist1 = histogram_from_gauss(gauss1)
+    hist2 = histogram_from_gauss(gauss2)
+    return probability(hist1,hist2)
+
+def gauss_matching(db: FingerprintDatabase, sample: dict[str,GaussModel]) -> SimpleLocation:
+    gaussDb = fromDbToGauss(db)
+    bestScore = None
+    bestLoc = None
+    for loc,FpGauss in gaussDb:
+        score = 0
+        for mac in FpGauss.keys():
+            gauss = FpGauss[mac]
+            if mac in sample.keys():
+                score = score + probability_gauss(sample[mac],gauss)
+        if bestScore == None or score > bestScore:
+            bestScore = score
+            bestLoc = loc
+    return bestLoc
 
 #a = ParserHisto("test_data_not_filtered.csv")
 #pass
