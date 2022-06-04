@@ -3,6 +3,9 @@ import math
 from numpy import arange
 
 class AccessPoint:
+    """
+    Classe représentant un point d'accès avec son MAC address, sa position, sa puissance son gain et sa fréquence.
+    """
     def __init__(self, mac: str, loc: SimpleLocation=SimpleLocation(0,0,0), p: float=20.0, a: float=5.0, f: float=2417000000):
         self.mac_address = mac
         self.location = loc
@@ -10,6 +13,7 @@ class AccessPoint:
         self.antenna_dbi = a
         self.output_frequency_hz = f
 
+#Liste des points d'accès que nous allons utiliser
 AP = {"00:13:ce:95:e1:6f": AccessPoint("00:13:ce:95:e1:6f", SimpleLocation(4.93, 25.81, 3.55), 20.0, 5.0, 2417000000), \
       "00:13:ce:95:de:7e": AccessPoint("00:13:ce:95:de:7e", SimpleLocation(4.83, 10.88, 3.78), 20.0, 5.0,2417000000), \
       "00:13:ce:97:78:79": AccessPoint("00:13:ce:97:78:79", SimpleLocation(20.05, 28.31, 3.74), 20.0, 5.0, 2417000000), \
@@ -53,6 +57,7 @@ def estimate_distance(rssi_avg: float, fbcm_index: float, ap: AccessPoint) -> fl
     
     return math.pow(10, ((Pt + Gr + Gt - Pr + 20*math.log10(lambd) - 20 * math.log10(4*math.pi)) / (10*i)))
 
+#Fonction qui permet de calculer la distance entre deux points
 dist = lambda x ,y  : math.sqrt(math.pow((x.x-y.x),2) + math.pow((x.y-y.y),2) + math.pow((x.z-y.z),2))
 
 def computeCost(distances: dict[str, float], ap_locations: dict[str, SimpleLocation],loc : SimpleLocation) -> float:
@@ -97,7 +102,7 @@ def multilateration(distances: dict[str, float], ap_locations: dict[str, SimpleL
     y_max = 21.5
     z_min = 1.2
     z_max = 4.2
-    for x in arange(x_min,x_max,0.1):
+    for x in arange(x_min,x_max,0.1): #On parcours l'ensemble de l'espace de recherche
         for y in arange(y_min,y_max,0.1):
             for z in arange(z_min,z_max,0.1):
                 loc = SimpleLocation(x,y,z)

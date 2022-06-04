@@ -1,4 +1,3 @@
-from this import d
 from TP1 import *
 from TP2 import *
 from TP3 import *
